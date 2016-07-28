@@ -11,36 +11,13 @@ Objective of the fox: eat the geese until the geese cannot trap the fox or reach
 
 RULES: 
 - YELLOW Pieces are geese
-- RED Piece is the fox
-- Fox can eat the geese 
+- RED Pieces is/are the fox/es
+- Fox/es can eat the geese 
+- Fox/es can "double" eat
 
-Funcitonalities include:
-
-- Having the pieces and board drawn to the screen
-
-- The ability to move pieces by clicking on the piece you want to move, then clicking on the square you would
-  like to move to. You can change you mind about the piece you would like to move, just click on a new piece of yours.
-
-- Knowledge of what moves are legal. When moving pieces, you'll be limited to legal moves.
-
-- Capturing
-
-- DOUBLE capturing etc.
-
-- Legal move and captive piece highlighting
-
-- Turn changes
-
-- Automatic kinging and the ability for them to move backwords
-
-- Automatic check for and end game. 
-
-- A silky smoooth 60 FPS!
-
-Everest Witman - May 2014 - Marlboro College - Programming Workshop 
 """
 
-import pygame, sys
+import pygame, sys, random
 from pygame.locals import *
 
 pygame.font.init()
@@ -60,6 +37,12 @@ NORTHWEST = "northwest"
 NORTHEAST = "northeast"
 SOUTHWEST = "southwest"
 SOUTHEAST = "southeast"
+NORTH 	  = "north"
+SOUTH 	  = "south"
+EAST	  = "east"
+WEST      = "west"
+
+
 
 class Game:
 	#Main game
@@ -213,7 +196,7 @@ class Graphics:
 				if board.matrix[x][y].occupant != None:
 					pygame.draw.circle(self.screen, board.matrix[x][y].occupant.color, self.pixel_coords((x,y)), self.piece_size) 
 
-					if board.location((x,y)).occupant.king == True:
+					if board.location((x,y)).occupant.fox == True:
 						pygame.draw.circle(self.screen, GOLD, self.pixel_coords((x,y)), int (self.piece_size / 1.7), self.piece_size / 4)
 
 
@@ -275,11 +258,19 @@ class Board:
 		for x in xrange(8):
 			for y in xrange(2):
 				if matrix[x][y].color == BLACK:
-					matrix[x][y].occupant = Piece(YELLOW)
-			for y in xrange(7, 8):
+					matrix[x][y].occupant = Piece(YELLOW,)
+			# for y in xrange(7, 8):
+			# 	if matrix[x][y].color == BLACK:
+			# 		posx= random.randint(4,7)
+			# 		posy= random.randint(4,7)
+			# 		matrix[posx][posy].occupant = Piece(RED, True)
+		for x in xrange(8):
+			for y in xrange(7,8):
 				if matrix[x][y].color == BLACK:
-					matrix[x][y].occupant = Piece(RED)
-
+					posx = random.randrange(0,8,2)
+					posy = random.randrange(4,8,2)
+					print posx ,posy
+					matrix[posx][posy].occupant = Piece(RED, True)
 		return matrix
 
 	def board_string(self, board):
@@ -327,8 +318,18 @@ class Board:
 			return (x - 1, y + 1)
 		elif dir == SOUTHEAST:
 			return (x + 1, y + 1)
+		elif dir == NORTH:
+			return (x  , y + 1)
+		elif dir == SOUTH:
+			return (x  , y - 1)
+		elif dir == EASY:
+			return (x + 1, y)
+		elif dir == WEST:
+			return (x - 1, y)
+
 		else:
 			return 0
+
 
 	def adjacent(self, (x,y)):
 		"""
@@ -336,6 +337,7 @@ class Board:
 		"""
 
 		return [self.rel(NORTHWEST, (x,y)), self.rel(NORTHEAST, (x,y)),self.rel(SOUTHWEST, (x,y)),self.rel(SOUTHEAST, (x,y))]
+		#self.rel(NORTH,(x,y)), self.rel(SOUTH,(x,y)), self.rel(EAST(x,y)), self.rel(WEST,(x,y))
 
 	def location(self, (x,y)):
 		"""
@@ -353,10 +355,10 @@ class Board:
 
 		if self.matrix[x][y].occupant != None:
 			
-			if self.matrix[x][y].occupant.king == False and self.matrix[x][y].occupant.color == RED:
+			if self.matrix[x][y].occupant.fox == False and self.matrix[x][y].occupant.color == RED:
 				blind_legal_moves = [self.rel(NORTHWEST, (x,y)), self.rel(NORTHEAST, (x,y))]
 				
-			elif self.matrix[x][y].occupant.king == False and self.matrix[x][y].occupant.color == YELLOW:
+			elif self.matrix[x][y].occupant.fox == False and self.matrix[x][y].occupant.color == YELLOW:
 				blind_legal_moves = [self.rel(SOUTHWEST, (x,y)), self.rel(SOUTHEAST, (x,y))]
 
 			else:
@@ -408,7 +410,7 @@ class Board:
 		self.matrix[end_x][end_y].occupant = self.matrix[start_x][start_y].occupant
 		self.remove_piece((start_x, start_y))
 
-		self.king((end_x, end_y))
+		#self.king((end_x, end_y))
 
 	def is_end_square(self, coords):
 		"""
@@ -458,19 +460,16 @@ class Board:
 			return True
 
 
-	def king(self, (x,y)):
-		"""
-		Takes in (x,y), the coordinates of square to be considered for kinging.
-		If it meets the criteria, then king() kings the piece in that square and kings it.
-		"""
-		if self.location((x,y)).occupant != None:
-			if (self.location((x,y)).occupant.color == RED and y == 0) or (self.location((x,y)).occupant.color == YELLOW and y == 7):
-				self.location((x,y)).occupant.king = True 
+	# def king(self, (x,y)):
+	# 	#set fox moves to all directions
+	# 	if self.location((x,y)).occupant != None:
+	# 		if (self.location((x,y)).occupant.color == RED and y == 0) or (self.location((x,y)).occupant.color == YELLOW and y == 7):
+	# 			self.location((x,y)).occupant.king = True 
 
 class Piece:
-	def __init__(self, color, king = False):
+	def __init__(self, color, fox = False):
 		self.color = color
-		self.king = king
+		self.fox = fox
 
 class Square:
 	def __init__(self, color, occupant = None):
